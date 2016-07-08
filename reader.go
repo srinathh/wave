@@ -77,8 +77,8 @@ func (h Header) Validate() error {
 
 // Reader is a reader for Wave file that encapsulates an io.Reader
 type Reader struct {
-	R      io.Reader
-	Header Header
+	R io.Reader
+	H Header
 }
 
 // NewReader creates a new wave reader by attempting to read the wave file header
@@ -99,17 +99,17 @@ func NewReader(r io.Reader) (*Reader, error) {
 // using information on DataChunk size, number of channels & bit per
 // sample information contained in the wave header.
 func (r *Reader) GetSampleCount() int {
-	return int(r.Header.DataChunkSize) / int(r.Header.Channels*(r.Header.BitsPerSample/8))
+	return int(r.H.DataChunkSize) / int(r.H.Channels*(r.H.BitsPerSample/8))
 }
 
 // GetBitsPerSample returns the number of bits per sample in the wave file.
 func (r *Reader) GetBitsPerSample() int {
-	return int(r.Header.BitsPerSample)
+	return int(r.H.BitsPerSample)
 }
 
 // GetChannels returns the number of channels in the wave file.
 func (r *Reader) GetChannels() int {
-	return int(r.Header.Channels)
+	return int(r.H.Channels)
 }
 
 // ReadInt reads the data from the wave file as a raw integer
@@ -118,9 +118,9 @@ func (r *Reader) GetChannels() int {
 // data processing without overflows.
 func (r *Reader) ReadInt() ([]int64, error) {
 
-	ret := make([]int64, r.Header.Channels)
-	for j := 0; j < int(r.Header.Channels); j++ {
-		switch r.Header.BitsPerSample {
+	ret := make([]int64, r.H.Channels)
+	for j := 0; j < int(r.H.Channels); j++ {
+		switch r.H.BitsPerSample {
 		case 8:
 			var data int8
 			if err := binary.Read(r.R, binary.LittleEndian, &data); err != nil {
@@ -151,27 +151,27 @@ func (r *Reader) ReadInt() ([]int64, error) {
 			}
 			ret[j] = int64(data2)<<16 + int64(data1)
 		default:
-			panic(fmt.Sprintf("unknonw bits per sample %d", r.Header.BitsPerSample))
+			panic(fmt.Sprintf("unknonw bits per sample %d", r.H.BitsPerSample))
 		}
 	}
 	return ret, nil
 }
 
-// ReadRawFloat reads the data from the wave file as 32 bit floating
+// ReadFloat reads the data from the wave file as 32 bit floating
 // point numbers. It returns 64 bit floats for computation convenience.
 // If BitsPerSample is not 32, it returns an error.
-func (r *Reader) ReadRawFloat() ([]float64, error) {
-	if r.Header.BitsPerSample != 32 {
-		return nil, fmt.Errorf("unexpected BitsPerSample in ReadRawFloat: want 32, got %d", r.Header.BitsPerSample)
+func (r *Reader) ReadFloat() ([]float64, error) {
+	if r.H.BitsPerSample != 32 {
+		return nil, fmt.Errorf("unexpected BitsPerSample in ReadRawFloat: want 32, got %d", r.H.BitsPerSample)
 	}
 
-	data := make([]float32, r.Header.Channels)
+	data := make([]float32, r.H.Channels)
 
 	if err := binary.Read(r.R, binary.LittleEndian, data); err != nil {
 		return nil, fmt.Errorf("error reading data in ReadRawFloat: %s", err)
 	}
 
-	ret := make([]float64, r.Header.Channels)
+	ret := make([]float64, r.H.Channels)
 	for j, item := range data {
 		ret[j] = float64(item)
 	}

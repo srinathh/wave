@@ -11,6 +11,7 @@ const (
 	testSampleCount   = 89
 	testChannels      = 2
 	testBitsPerSample = 16
+	testSamplesPerSec = 44100
 )
 
 // testData is a 2 channel 16 bit wave file representing a square wave of amplitude ~ 0.7
@@ -72,4 +73,47 @@ func TestReadData(t *testing.T) {
 	} else {
 		t.Logf("got amplitude ratio: %f", ratio)
 	}
+}
+
+func TestWriteData(t *testing.T) {
+	r, err := NewReader(bytes.NewReader(testData))
+	if err != nil {
+		t.Fatalf("Error: creating reader in TestWriteData:%s", err)
+	}
+
+	samples := make([][]int64, r.GetSampleCount())
+
+	for j := 0; j < r.GetSampleCount(); j++ {
+		sample, err := r.ReadInt()
+		if err != nil {
+			t.Fatalf("Error: reading testdata in TestWriteData: %s", err)
+		}
+		samples[j] = sample
+	}
+
+	buf := bytes.Buffer{}
+	w, err := NewWriter(&buf, testChannels, testSamplesPerSec, testBitsPerSample, testSampleCount)
+	if err != nil {
+		t.Fatalf("Error: creating wave writer in TestWriteData: %s", err)
+	}
+
+	for _, sample := range samples {
+		if err := w.WriteInt(sample); err != nil {
+			t.Fatalf("Error: writing sample: %s", err)
+		}
+	}
+
+	want := testData
+	got := buf.Bytes()
+
+	if len(got) != len(want) {
+		t.Fatalf("got & want data sizes do not match: want %d: got %d", len(want), len(got))
+	}
+
+	for j, item := range got {
+		if want[j] != item {
+			t.Fatalf("mismatch writing data in byte %d:\nwant\n%v\ngot:%v\n", j, want, got)
+		}
+	}
+
 }
