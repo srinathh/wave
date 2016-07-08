@@ -1,4 +1,4 @@
-package wavcodec
+package wave
 
 import (
 	"encoding/binary"
@@ -6,27 +6,27 @@ import (
 	"io"
 )
 
-/*
-WaveHeader is a struct that holds Header information for a standard PCM Wave file.
-The structure is used for reading & writing Wave File information. Reference sources:
-https://blogs.msdn.microsoft.com/dawate/2009/06/23/intro-to-audio-programming-part-2-demystifying-the-wav-format/
-*/
-type WaveHeader struct {
-	RiffID        [4]byte // *must be RIFF
-	DataSize      uint32  // *36 + SubChunk2Size, or : 4 + (8 + SubChunk1Size) + (8 + SubChunk2Size)
-	RiffType      [4]byte // *must be WAVE  *
-	FmtChunkID    [4]byte // *must be "fmt "
-	FmtChunkSize  uint32  // *must be 16 for PCM
-	AudioFmt      uint16  // *will be 1 for PCM, if not 1, compression is used
-	Channels      uint16  // Number of channels of audio
-	SamplesPerSec uint32  // Sampling rate
-	BytesPerSec   uint32  // SampleRate * NumChannels * BitsPerSample/8
-	BlockAlign    uint16  // NumChannels * BitsPerSample/8
-	BitsPerSample uint16  // 8, 16, 24  (int) or 32 (int/float)
-	DataChunkID   [4]byte // *must be "data"
-	DataChunkSize uint32  //= NumSamples * NumChannels * BitsPerSample/8
+// Header is a struct that holds Header information for a standard PCM Wave file.
+// The structure is used for reading & writing Wave File information. Reference source:
+// https://blogs.msdn.microsoft.com/dawate/2009/06/23/intro-to-audio-programming-part-2-demystifying-the-wav-format/
+type Header struct {
+	RiffID        [4]byte // must be "RIFF"
+	DataSize      uint32  // 36 + SubChunk2Size, Little Endian
+	RiffType      [4]byte // must be "WAVE"
+	FmtChunkID    [4]byte // must be "fmt "
+	FmtChunkSize  uint32  // must be 16 for PCM, Little Endian
+	AudioFmt      uint16  // must be 1 for standard PCM, else indicates compression, Little Endian
+	Channels      uint16  // Number of channels of audio, Little Endian
+	SamplesPerSec uint32  // Sampling rate, Little Endian
+	BytesPerSec   uint32  // SampleRate * NumChannels * BitsPerSample/8, Little Endian
+	BlockAlign    uint16  // NumChannels * BitsPerSample/8, Little Endian
+	BitsPerSample uint16  // 8, 16, 24  (int) or 32 (int/float), Little Endian
+	DataChunkID   [4]byte // must be "data"
+	DataChunkSize uint32  // NumSamples * NumChannels * BitsPerSample/8
 }
 
+// byte4Cmp is a utility function that compares [4]byte types with strings
+// used in wave header validation.
 func byte4Cmp(b [4]byte, s string) bool {
 	if len(s) != 4 {
 		panic(fmt.Sprintf("comparing a [4]byte with string %s: size %d", s, len(s)))
@@ -39,8 +39,8 @@ func byte4Cmp(b [4]byte, s string) bool {
 	return true
 }
 
-// Validate checks wheather a WaveHeader represents a supported Wave format
-func (h WaveHeader) Validate() error {
+// Validate checks wheather a wave header represents a supported PCM Wave format.
+func (h Header) Validate() error {
 
 	if !byte4Cmp(h.RiffID, "RIFF") {
 		return fmt.Errorf("unexpected RiffID in header: want %s, got %s", "RIFF", h.RiffID)
@@ -78,14 +78,14 @@ func (h WaveHeader) Validate() error {
 // Reader is a reader for Wave file that encapsulates an io.Reader
 type Reader struct {
 	R      io.Reader
-	Header WaveHeader
+	Header Header
 }
 
 // NewReader creates a new wave reader by attempting to read the wave file header
 // from the provided io.Reader. The wave samples can be subsequently read  from the
 // wave reader using ReadInt or ReadFloat
 func NewReader(r io.Reader) (*Reader, error) {
-	h := WaveHeader{}
+	h := Header{}
 	if err := binary.Read(r, binary.LittleEndian, &h); err != nil {
 		return nil, fmt.Errorf("error decoding Header in NewReader:%s", err)
 	}
@@ -159,6 +159,7 @@ func (r *Reader) ReadInt() ([]int64, error) {
 
 // ReadRawFloat reads the data from the wave file as 32 bit floating
 // point numbers. It returns 64 bit floats for computation convenience.
+// If BitsPerSample is not 32, it returns an error.
 func (r *Reader) ReadRawFloat() ([]float64, error) {
 	if r.Header.BitsPerSample != 32 {
 		return nil, fmt.Errorf("unexpected BitsPerSample in ReadRawFloat: want 32, got %d", r.Header.BitsPerSample)

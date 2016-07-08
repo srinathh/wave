@@ -1,4 +1,4 @@
-package wavcodec
+package wave
 
 import (
 	"bytes"
