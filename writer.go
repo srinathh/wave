@@ -15,8 +15,9 @@ type Writer struct {
 	numSamples int
 }
 
-// NewWriter creates a wave Writer and writes its header. Subsequent calls to
-// WriteInt and WriteFloat should be used to write the actual sample data.
+// NewWriter creates a wave writer encapsulating a provided io.Writer
+// NewWriter() attempts to first write the wave header to the provided writer and
+// samples can be subsequently written through `WriteInt()` and `WriteFloat()` functions.
 func NewWriter(w io.Writer, channels, samplesPerSec, bitsPerSample, numSamples int) (*Writer, error) {
 
 	subChunk2Size := uint32(numSamples * channels * bitsPerSample / 8)
@@ -43,7 +44,11 @@ func NewWriter(w io.Writer, channels, samplesPerSec, bitsPerSample, numSamples i
 	return &Writer{w, h, 0, numSamples}, nil
 }
 
-// WriteInt writes samples as bitsPerSample integers for 8, 16 and 32 bit PCM.
+// WriteInt writes samples to the wave file. In the []int64 slice passed to WriteInt,
+// each slice element should correspond to a channel in the sample. These are simply
+// cast to the required bit-depth declared when creating the Writer and written to
+// the underlying io.Writer. If the number of samples written exceeds the declared
+// number of samples, an error is raised.
 func (w *Writer) WriteInt(samples []int64) error {
 	if len(samples) != int(w.H.Channels) {
 		return fmt.Errorf("number of samples != channels in WriteInt: want %d: got %d", w.H.Channels, len(samples))
@@ -89,7 +94,10 @@ func (w *Writer) WriteInt(samples []int64) error {
 	return fmt.Errorf("error writing sample in WriteInt:%s", reterr)
 }
 
-// WriteFloat writes wave samples as 32 bit floating point numbers
+// WriteFloat writes samples to the wave file. In the []float64 slice passed to WriteInt,
+// each slice element should correspond to a channel in the sample. These are simply
+// cast to 32 bit floats and written to the underlying io.Writer. If the number of
+// samples written exceeds the declared number of samples, an error is raised.
 func (w *Writer) WriteFloat(samples []float64) error {
 	if len(samples) != int(w.H.Channels) {
 		return fmt.Errorf("number of samples != channels in WriteInt: want %d: got %d", w.H.Channels, len(samples))

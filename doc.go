@@ -1,3 +1,2 @@
-// Package wave implements a reader and writer for standard PCM wav files.
-// It supports 8, 16, 24 & 32 bit integer and floating point wave files.
+// Package wave implements a simple and idiomatic reader and writer standard PCM wav files.
 package wave

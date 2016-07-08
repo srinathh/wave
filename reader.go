@@ -7,7 +7,9 @@ import (
 )
 
 // Header is a struct that holds Header information for a standard PCM Wave file.
-// The structure is used for reading & writing Wave File information. Reference source:
+// The structure is used for reading & writing Wave File information.
+//
+// Reference source:
 // https://blogs.msdn.microsoft.com/dawate/2009/06/23/intro-to-audio-programming-part-2-demystifying-the-wav-format/
 type Header struct {
 	RiffID        [4]byte // must be "RIFF"
@@ -81,9 +83,11 @@ type Reader struct {
 	H Header
 }
 
-// NewReader creates a new wave reader by attempting to read the wave file header
-// from the provided io.Reader. The wave samples can be subsequently read  from the
-// wave reader using ReadInt or ReadFloat
+// NewReader creates a new wave reader encapsulating the provided io.Reader.
+// When `NewReader()` is called to create a `Reader`, it attempts to read the header information
+// from the provided reader and validates if it is a supported format. Samples can then be
+// read using `ReadInt()` or `ReadFloat()` functions depending on whether the data is expected
+// to be integer or floating point.
 func NewReader(r io.Reader) (*Reader, error) {
 	h := Header{}
 	if err := binary.Read(r, binary.LittleEndian, &h); err != nil {
@@ -112,10 +116,16 @@ func (r *Reader) GetChannels() int {
 	return int(r.H.Channels)
 }
 
-// ReadInt reads the data from the wave file as a raw integer
-// respecting BitsPerSample without performing any normalization.
-// It returns the data read as int64 as a convenience to allow
-// data processing without overflows.
+// GetSamplesPerSec gets number of samples per second in the wave file.
+func (r *Reader) GetSamplesPerSec() int {
+	return int(r.H.SamplesPerSec)
+}
+
+// ReadInt reads the data from the wave file as an integer. When reading data, the function respects
+// the Bits Per Sample declared in the wave file header. The read functions return a `[]int64`
+// where each slice element corresponds to the sample for a channel. The 64 bit types are meant
+// to allow headroom for any further audio processing without clipping. The read data is simply
+// cast into 64 bit integers and no other normalization or conversion is performed.
 func (r *Reader) ReadInt() ([]int64, error) {
 
 	ret := make([]int64, r.H.Channels)
@@ -157,9 +167,11 @@ func (r *Reader) ReadInt() ([]int64, error) {
 	return ret, nil
 }
 
-// ReadFloat reads the data from the wave file as 32 bit floating
-// point numbers. It returns 64 bit floats for computation convenience.
-// If BitsPerSample is not 32, it returns an error.
+// ReadFloat reads the data from the wave file as an integer. When reading data, the function respects
+// the Bits Per Sample declared in the wave file header. The read functions return a `[]float64`
+// where each slice element corresponds to the sample for a channel. The 64 bit types are meant
+// to allow headroom for any further audio processing without clipping. The read data is simply
+// cast into 64 bit float and no other normalization or conversion is performed.
 func (r *Reader) ReadFloat() ([]float64, error) {
 	if r.H.BitsPerSample != 32 {
 		return nil, fmt.Errorf("unexpected BitsPerSample in ReadRawFloat: want 32, got %d", r.H.BitsPerSample)

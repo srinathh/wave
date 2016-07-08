@@ -2,7 +2,9 @@ package wave
 
 import (
 	"bytes"
+	"fmt"
 	"math"
+	"os"
 	"testing"
 )
 
@@ -116,4 +118,38 @@ func TestWriteData(t *testing.T) {
 		}
 	}
 
+}
+
+func ExampleReader() {
+	r, err := NewReader(bytes.NewReader(testData))
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Bits Per Sample: %d\n", r.GetBitsPerSample())
+	fmt.Printf("Samples Per Second: %d\n", r.GetSamplesPerSec())
+	fmt.Printf("Number of Channels: %d\n", r.GetChannels())
+	fmt.Printf("Sample Count: %d\n", r.GetSampleCount())
+	fmt.Printf("First 5 samples in Channel 0:")
+	for j := 0; j < 5; j++ {
+		sample, err := r.ReadInt()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Printf("\nSample %d: %d", j, sample[0])
+	}
+
+	// Output:
+	// Bits Per Sample: 16
+	// Samples Per Second: 44100
+	// Number of Channels: 2
+	// Sample Count: 89
+	// First 5 samples in Channel 0:
+	// Sample 0: 0
+	// Sample 1: 18722
+	// Sample 2: 23260
+	// Sample 3: 22879
+	// Sample 4: 23005
 }
