@@ -77,6 +77,28 @@ func (h Header) Validate() error {
 	return nil
 }
 
+// GetSampleCount calculates the number of samples int he wave file
+// using information on DataChunk size, number of channels & bit per
+// sample information contained in the wave header.
+func (h *Header) GetSampleCount() int {
+	return int(h.DataChunkSize) / int(h.Channels*(h.BitsPerSample/8))
+}
+
+// GetBitsPerSample returns the number of bits per sample in the wave file.
+func (h *Header) GetBitsPerSample() int {
+	return int(h.BitsPerSample)
+}
+
+// GetChannels returns the number of channels in the wave file.
+func (h *Header) GetChannels() int {
+	return int(h.Channels)
+}
+
+// GetSamplesPerSec gets number of samples per second in the wave file.
+func (h *Header) GetSamplesPerSec() int {
+	return int(h.SamplesPerSec)
+}
+
 // Reader is a reader for Wave file that encapsulates an io.Reader
 type Reader struct {
 	R io.Reader
@@ -97,28 +119,6 @@ func NewReader(r io.Reader) (*Reader, error) {
 		return nil, fmt.Errorf("could not validate header: %s", err)
 	}
 	return &Reader{r, h}, nil
-}
-
-// GetSampleCount calculates the number of samples int he wave file
-// using information on DataChunk size, number of channels & bit per
-// sample information contained in the wave header.
-func (r *Reader) GetSampleCount() int {
-	return int(r.H.DataChunkSize) / int(r.H.Channels*(r.H.BitsPerSample/8))
-}
-
-// GetBitsPerSample returns the number of bits per sample in the wave file.
-func (r *Reader) GetBitsPerSample() int {
-	return int(r.H.BitsPerSample)
-}
-
-// GetChannels returns the number of channels in the wave file.
-func (r *Reader) GetChannels() int {
-	return int(r.H.Channels)
-}
-
-// GetSamplesPerSec gets number of samples per second in the wave file.
-func (r *Reader) GetSamplesPerSec() int {
-	return int(r.H.SamplesPerSec)
 }
 
 // ReadInt reads the data from the wave file as an integer. When reading data, the function respects

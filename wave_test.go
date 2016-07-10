@@ -25,19 +25,19 @@ func TestReadHeader(t *testing.T) {
 		t.Fatalf("Error reading test data header: %s", err)
 	}
 
-	if numSamples := r.GetSampleCount(); numSamples != testSampleCount {
+	if numSamples := r.H.GetSampleCount(); numSamples != testSampleCount {
 		t.Fatalf("Sample count mismatch: want %d: got %d", testSampleCount, numSamples)
 	} else {
 		t.Logf("Sample Count: %d", numSamples)
 	}
 
-	if channels := r.GetChannels(); channels != testChannels {
+	if channels := r.H.GetChannels(); channels != testChannels {
 		t.Fatalf("Channel  mismatch: want %d: got %d", testChannels, channels)
 	} else {
 		t.Logf("Channels: %d", channels)
 	}
 
-	if bitsPerSample := r.GetBitsPerSample(); bitsPerSample != testBitsPerSample {
+	if bitsPerSample := r.H.GetBitsPerSample(); bitsPerSample != testBitsPerSample {
 		t.Fatalf("Channel  mismatch: want %d: got %d", testBitsPerSample, bitsPerSample)
 	} else {
 		t.Logf("bits per sample: %d", bitsPerSample)
@@ -54,7 +54,7 @@ func TestReadData(t *testing.T) {
 	// count the number of samples where absolute sample value is +/- 0.02
 	// and check whether these are at least 90% of the samples
 	ctr := 0
-	for j := 0; j < r.GetSampleCount(); j++ {
+	for j := 0; j < r.H.GetSampleCount(); j++ {
 		sample, err := r.ReadInt()
 		if err != nil {
 			t.Fatal(err)
@@ -69,7 +69,7 @@ func TestReadData(t *testing.T) {
 		}
 	}
 
-	ratio := float64(ctr) / float64(r.GetSampleCount())
+	ratio := float64(ctr) / float64(r.H.GetSampleCount())
 	if ratio < 0.9 {
 		t.Fatalf("unexpected low amplitudes : want %f, got %f", 0.9, ratio)
 	} else {
@@ -83,9 +83,9 @@ func TestWriteData(t *testing.T) {
 		t.Fatalf("Error: creating reader in TestWriteData:%s", err)
 	}
 
-	samples := make([][]int64, r.GetSampleCount())
+	samples := make([][]int64, r.H.GetSampleCount())
 
-	for j := 0; j < r.GetSampleCount(); j++ {
+	for j := 0; j < r.H.GetSampleCount(); j++ {
 		sample, err := r.ReadInt()
 		if err != nil {
 			t.Fatalf("Error: reading testdata in TestWriteData: %s", err)
@@ -127,10 +127,10 @@ func ExampleReader() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Bits Per Sample: %d\n", r.GetBitsPerSample())
-	fmt.Printf("Samples Per Second: %d\n", r.GetSamplesPerSec())
-	fmt.Printf("Number of Channels: %d\n", r.GetChannels())
-	fmt.Printf("Sample Count: %d\n", r.GetSampleCount())
+	fmt.Printf("Bits Per Sample: %d\n", r.H.GetBitsPerSample())
+	fmt.Printf("Samples Per Second: %d\n", r.H.GetSamplesPerSec())
+	fmt.Printf("Number of Channels: %d\n", r.H.GetChannels())
+	fmt.Printf("Sample Count: %d\n", r.H.GetSampleCount())
 	fmt.Printf("First 5 samples in Channel 0:")
 	for j := 0; j < 5; j++ {
 		sample, err := r.ReadInt()
