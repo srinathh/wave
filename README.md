@@ -18,26 +18,24 @@ The following example demonstrates how to use a Reader. First create a `wave.Rea
 an `io.Reader` using the `NewReader()` function. If the reader is able to successfully read and 
 validate the header, you can read samples using the `ReadInt()` and `ReadFloat()` functions.
 ```
-func ExampleReader() {
-	r, err := NewReader(bytes.NewReader(testData))
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+r, err := NewReader(bytes.NewReader(testData))
+if err != nil {
+    fmt.Println(err)
+    os.Exit(1)
+}
 
-	fmt.Printf("Bits Per Sample: %d\n", r.GetBitsPerSample())
-	fmt.Printf("Samples Per Second: %d\n", r.GetSamplesPerSec())
-	fmt.Printf("Number of Channels: %d\n", r.GetChannels())
-	fmt.Printf("Sample Count: %d\n", r.GetSampleCount())
-	fmt.Printf("First 5 samples in Channel 0:")
-	for j := 0; j < 5; j++ {
-		sample, err := r.ReadInt()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Printf("\nSample %d: %d", j, sample[0])
-	}
+fmt.Printf("Bits Per Sample: %d\n", r.H.GetBitsPerSample())
+fmt.Printf("Samples Per Second: %d\n", r.H.GetSamplesPerSec())
+fmt.Printf("Number of Channels: %d\n", r.H.GetChannels())
+fmt.Printf("Sample Count: %d\n", r.H.GetSampleCount())
+fmt.Printf("First 5 samples in Channel 0:")
+for j := 0; j < 5; j++ {
+    sample, err := r.ReadInt()
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    fmt.Printf("\nSample %d: %d", j, sample[0])
 }
 ```
 which gives the output:
